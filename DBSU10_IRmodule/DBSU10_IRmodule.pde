@@ -17,7 +17,7 @@ float treshold = 1.5; // e.g. trigger within 1.5 meters
 
 // oocsi
 OOCSI oocsi;
-String channelName = "channel ghostroom";
+String channelName = "ghostroom";
 
 // visualisation
 int fillRed = 255;
@@ -31,7 +31,7 @@ void setup() {
   arduino.pinMode(irPin, Arduino.OUTPUT);
 
   oocsi = new OOCSI(this, "irModule6", "localhost"); // localhost/host
-  oocsi.subscribe( channelName ); // connect to desired channel
+  oocsi.subscribe( channelName, "testchannel" ); // connect to desired channel
 }
 
 void draw() {
@@ -49,6 +49,6 @@ void draw() {
 }
 
 // retreiving messages from the OOCSI server, however, our module is more interested into sending messages
-//public void handleOOCSIEvent(OOCSIEvent event) {
-//  System.out.println(event.getTimestamp());
-//}
+public void testchannel(OOCSIEvent event) {
+  System.out.println(event.getTimestamp());
+}
