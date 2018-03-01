@@ -10,7 +10,8 @@ import nl.tue.id.oocsi.*;
 
 // arduino
 Arduino arduino;
-int irPin; // pin # of the IR sensor component
+int irPin; // pin # of the IR sensor component on arduino
+int ledPin = 13; // pin # of the led pin
 float treshold = 1.5; // e.g. trigger within 1.5 meters
 // the rest of the code assumes that the sensor will give an output already within our desired range,
 // hence the treshold isn't used. If this isn't the case, we can easily program this in.
@@ -25,12 +26,14 @@ int fillRed = 255;
 void setup() {
   size(200,200);
   noStroke();
+  
 
-  println( Arduino.list() );
+  println( Arduino.list() ); // to find the Arduino serial # needed to create the object 
   arduino = new Arduino(this, Arduino.list()[0], 57600);
-  arduino.pinMode(irPin, Arduino.OUTPUT);
+  arduino.pinMode(irPin, Arduino.OUTPUT); // setting the pin mode of irPin
+  arduino.pinMode( ledPin, Arduino.OUTPUT);
 
-  oocsi = new OOCSI(this, "irModule6", "localhost"); // localhost/host
+  oocsi = new OOCSI(this, "irModule6", "oocsi.id.tue.nl"); // localhost/host
   oocsi.subscribe( channelName, "testchannel" ); // connect to desired channel
 }
 
@@ -46,9 +49,19 @@ void draw() {
   // visualize sensor output
   fill(fillRed, 120, 120);
   ellipse(100, 100, 100, 100);
+  
+  // arduino testing
+  blink();
 }
 
 // retreiving messages from the OOCSI server, however, our module is more interested into sending messages
 public void testchannel(OOCSIEvent event) {
-  System.out.println(event.getTimestamp());
+  System.out.println( event.getTimestamp() );
+}
+
+void blink() {
+  arduino.digitalWrite(ledPin, Arduino.HIGH);
+  delay(500);
+  arduino.digitalWrite(ledPin, Arduino.LOW);
+  delay(500); 
 }
