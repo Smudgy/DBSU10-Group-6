@@ -13,7 +13,8 @@ String channelName = "GhostRoomChannel";
 
 void setup () { 
   size(300, 300);
-
+  colorMode(HSB, 100);
+  
   // new oocsi object
   oocsi = new OOCSI(this, clientName, "localhost", true);
   oocsi.subscribe( channelName, "testchannel");
@@ -42,24 +43,20 @@ void handleOOCSIEvent(OOCSIEvent e) {
 
 // visualize
 void draw() {
-
-  //count++;
-  noStroke();
-  colorMode(RGB, 255, 255, 255, 255);
-  //background(20, 20, 20, 20);
-  fill(20, 20, 20, 50);
-  rect(0, 0, width, height);
-
-  colorMode(HSB, 100);
-  fill(100, 0, 100);
-  ellipse(150 + 40 * sin( count / 80 ), (count/2 % 340) - 40, 20, 20);
-
-  fill(100, 0, 100, 20);
-  for (int y = 5; y < height && booCount < (boos % 900); y += 10) {
-    for (int x = 5; x < width && booCount < (boos % 900); x += 10) { 
-      ellipse(x, y, 2, 2 );
+  background(0);
+  
+  stroke(0);
+  strokeWeight(2);
+  for (int y = 0; y < height && booCount < (boos % 900); y += 10) {
+    for (int x = 0; x < width && booCount < (boos % 900); x += 10) {
+      fill(x/3, 60, 100 - y/3  );
+      rect(x, y, 10, 10 );
       booCount++;
     }
   }
   booCount = 0;
+   
+  noStroke();
+  fill(100, 0, 100);
+  ellipse(150 + 40 * sin( count / 80 ), (count/2 % 340) - 40, 20, 20);
 }

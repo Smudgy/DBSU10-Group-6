@@ -12,13 +12,10 @@ String clientName = "irSensorGroup6_2";
 String channelName = "GhostRoomChannel";
 
 void setup () { 
-  size(300, 300);
+  size(100, 100);
 
   // new oocsi object
   oocsi = new OOCSI(this, clientName, "localhost", true);
-
-  // send messages
-  //oocsi.channel( clientName ).data("hi", "cool").send();
 }
 
 // receive direct messages
@@ -29,7 +26,19 @@ void handleOOCSIEvent(OOCSIEvent e) {
   oocsi.channel( clientName ).data("hi", "cool").send();
 }
 
-// visualize
+// draw
 void draw() {
-  oocsi.channel( channelName ).data("boo", 0).send();
+  background(255);
+  // send message every # frames
+  noStroke();
+  textAlign(CENTER, CENTER);
+  if (frameCount % 5 == 0){
+    oocsi.channel( channelName ).data("boo", 0).send();
+    fill(255, 0, 0);
+    textSize(20);
+  } else {
+    fill(0, 0, 255);
+    textSize(20); 
+  }
+  text("sending", width/2, height/2); 
 }
