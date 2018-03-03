@@ -37,13 +37,14 @@ void setup() {
   oocsi.subscribe( channelName, "testchannel" ); // connect to desired channel
   
   // register for responses to calls
-  oocsi.register("settings", "config");
+  oocsi.register("settings", "setValues");
+  oocsi.register("get", "getValues");
 }
 
 void draw() {
   background(255);
   
-  for (int i = 0; i < pinAmount - 1; i++){      
+  for (int i = 0; i < pinAmount - 1; i++){   
     if (arduino.analogRead( irPins[i] ) > threshold) {
       fill(255, 150, 150);
       oocsi.channel( channelName ).data( "irSensor", 100).send(); // send message over the channel
@@ -65,13 +66,13 @@ public void testchannel(OOCSIEvent event) {
 // ---------------- API METHODS ----------------
 
 // configurates the module, responses with true as feedback
-void config(OOCSIEvent event, OOCSIData response){
+void setValues(OOCSIEvent event, OOCSIData response){
   if (event.has("pinAmount")) {
     pinAmount =  Math.max( event.getInt("pinAmount", 0), 3);
     response.data("pinAmountChanged", true);
   }
   if (event.has("threshold")) {
-    threshold = Math.max( event.getInt("threshold", 0), 1024 );
+    threshold = event.getInt("threshold", 0);
     response.data("thresholdChanged", true);
   }
   if (event.has("channelName")) {
@@ -80,9 +81,28 @@ void config(OOCSIEvent event, OOCSIData response){
   }
 }
 
+// gets values from the module
+void getValues(OOCSIEvent event, OOCSIData response){
+  // responses with sensor values
+  // type: int[]
+  if (event.has("getSensorValues")) {
+    response.data("SensorValues", getSensorValues() );
+  }
+  // responses with amount of sensor values above the threshold
+  // type: int
+  if (event.has("getTriggered")) {
+    response.data("Triggered", getTriggered() );
+  }
+  // responses with true iff amount of active sensors is equal to the amount above the threshold
+  // type: boolean
+  if (event.has("allTriggered")) {
+    response.data("allTriggered", allTriggered() );
+  }
+}
+
 // returns array with sensor values
 // parameters: -
-int[] getValues() {
+int[] getSensorValues() {
   int[] irVals = new int[ irPins.length ];
   for (int i = 0; i < pinAmount - 1; i++){
     irVals[i] = arduino.analogRead( irPins[i] );
@@ -92,7 +112,7 @@ int[] getValues() {
 
 // returns amount of sensor values above the threshold ( = "triggered" )
 // parameters: int treshold ( 0 - 1024 )
-int getTriggered( int threshold ) {
+int getTriggered() {
   int count = 0;
   int[] irVals = getValues();
   
@@ -106,6 +126,6 @@ int getTriggered( int threshold ) {
 
 // returns boolean. true if all sensors are triggered
 // parameters: int treshold ( 0 - 1024 )
-boolean allTriggered( int threshold ) { 
-  return ( pinAmount == getTriggered( int threshold ) );
+boolean allTriggered() {
+  return ( pinAmount == getTriggered() );
 }
