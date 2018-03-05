@@ -1,9 +1,9 @@
 /**  
-*  DBSU10 IR sensor module
-*  @author Tom van Roozendaal, group 6
-*  @version 1.3
-*  @since 22/02/2018
-*/
+ *  DBSU10 IR sensor module
+ *  @author Tom van Roozendaal, group 6
+ *  @version 1.3
+ *  @since 22/02/2018
+ */
 import processing.serial.*;
 import cc.arduino.*;
 import nl.tue.id.oocsi.*;
@@ -23,11 +23,12 @@ int threshold = 512; // Arduino outputs range from 0 to 1024
 
 void setup() {
   size(300, 100);
-  noStroke();
-  
+  strokeWeight( 2 );
+  stroke( 255 );
+
   println( Arduino.list() ); // to find the Arduino serial # needed to create the object, usually its the first element
   arduino = new Arduino(this, Arduino.list()[0], 57600);
-  for (int i = 0; i < irPins.length; i++){
+  for ( int i = 0; i < irPins.length; i++ ) {
     arduino.pinMode(irPins[i], Arduino.INPUT); // setting the pin mode of irPin
   }
   arduino.pinMode( ledPin, Arduino.OUTPUT );
@@ -40,8 +41,8 @@ void setup() {
 
 void draw() {
   background(255);
-  
-  for (int i = 0; i < pinAmount - 1; i++){   
+
+  for (int i = 0; i < pinAmount; i++) {
     if (arduino.analogRead( irPins[i] ) > threshold) {
       fill(255, 150, 150);
       arduino.digitalWrite( ledPin, Arduino.HIGH );
@@ -49,8 +50,8 @@ void draw() {
       fill(200, 200, 200);
       arduino.digitalWrite( ledPin, Arduino.LOW );
     }
-    
-    rect( i * 100, 0, width/irPins.length, 100);
+
+    rect( (i) * 100, 0, width/irPins.length - 1, 100 - 2);
   }
 }
 
@@ -61,16 +62,16 @@ public void testchannel(OOCSIEvent event) {
 // sending messages over the channel
 public void sendData() {
   if ( channelName != null && !channelName.isEmpty() ) {
-     oocsi.channel( channelName ).data( "irSensor", 100).send(); // send message over the channel 
+    oocsi.channel( channelName ).data( "irSensor", 100).send(); // send message over the channel
   }
 }
 
 // ---------------- API METHODS ----------------
 
 // configurates the module, responses with true as feedback
-void setValues(OOCSIEvent event, OOCSIData response){
+void setValues(OOCSIEvent event, OOCSIData response) {
   if (event.has("pinAmount")) {
-    pinAmount =  Math.max( event.getInt("pinAmount", 0), 3);
+    pinAmount =  Math.max( event.getInt("pinAmount", 0), irPins.length );
     response.data("pinAmountChanged", true);
   }
   if (event.has("threshold")) {
@@ -85,7 +86,7 @@ void setValues(OOCSIEvent event, OOCSIData response){
 }
 
 // gets values from the module
-void getValues(OOCSIEvent event, OOCSIData response){
+void getValues(OOCSIEvent event, OOCSIData response) {
   // responses with sensor values
   // type: int[]
   if (event.has("sensorValues")) {
@@ -115,7 +116,7 @@ int getSensorValue( int n ) {
 // parameters: -
 int[] getSensorValues() {
   int[] irVals = new int[ irPins.length ];
-  for (int i = 0; i < pinAmount - 1; i++){
+  for (int i = 0; i < pinAmount; i++) {
     irVals[i] = arduino.analogRead( irPins[i] );
   }
   return ( irVals );
@@ -126,9 +127,9 @@ int[] getSensorValues() {
 int getTriggered() {
   int count = 0;
   int[] irVals = getSensorValues();
-  
-  for (int i = 0; i < irVals.length; i++){
-    if ( irVals[i] > threshold ){
+
+  for (int i = 0; i < irVals.length; i++) {
+    if ( irVals[i] > threshold ) {
       count++;
     }
   }
