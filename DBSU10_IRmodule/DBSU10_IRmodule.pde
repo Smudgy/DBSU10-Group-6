@@ -23,7 +23,7 @@ boolean stick = false;
 int delay = 1000; // delay for a sensor to be seeing before it gets triggered in ms
 boolean respondOnTrigger = true;
 boolean responded = false;
-boolean subbed = true;
+boolean linkedChannel = false;
 
 // timer/trigger related arrays
 int[] timers = new int[3];
@@ -37,7 +37,7 @@ void setup() {
   colorMode( HSB, 100 );
 
   println( Arduino.list() ); // to find the Arduino serial # needed to create the object
-  arduino = new Arduino(this, Arduino.list()[1], 57600);
+  arduino = new Arduino(this, Arduino.list()[0], 57600);
   for ( int i = 0; i < irPins.length; i++ ) {
     arduino.pinMode(irPins[i], Arduino.INPUT); // setting the pin mode of irPin
   }
@@ -57,36 +57,37 @@ void draw() {
     if ( triggers[i] && stick) {
       fill(60, 100, 100);
     } else if ( arduino.digitalRead( irPins[i] ) != 1 ) {
-      if ( delay > 0 && !triggers[i]){
+      if ( delay > 0 && !triggers[i]) {
         // if started is false, reset the timer
-        if (!started[i]){
+        if (!started[i]) {
           timers[i] = millis() + delay;
         }
         started[i] = true;
         fill(60, 50, 100);
-        if (timers[i] - millis() < 0){
+        if (timers[i] - millis() < 0) {
           triggers[i] = true;
           println("sensor " + (i+1) + " triggered!" );
-          if (respondOnTrigger && subbed) {
+          if (respondOnTrigger && linkedChannel) {
             oocsi.channel(channelName).data("IR6sensor", (i+1));
+            println("data sent to " + channelName);
           }
         }
       } else {
         //println("sensor " + (i+1) + " triggered!" );
-        if (respondOnTrigger && subbed && !responded) {
+        if (respondOnTrigger && linkedChannel && !responded) {
           oocsi.channel(channelName).data("IR6sensor", (i+1));
           responded = true;
         }
-        fill(60, 100, 100);        
+        fill(60, 100, 100);
       }
     } else {
-      if ( delay > 0 ){
+      if ( delay > 0 ) {
         started[i] = false;
       }
       triggers[i] = false;
       fill(60, 0, 75);
     }
-    
+
     //println( arduino.digitalRead( irPins[i] ) );
     rect( (i) * width/irPins.length, 0, width/irPins.length - 1, 100 - 2);
   }
@@ -113,15 +114,17 @@ void setValues(OOCSIEvent event, OOCSIData response) {
   if (event.has("pinAmount")) {
     pinAmount =  Math.max( event.getInt("pinAmount", 0), irPins.length );
     response.data("pinAmountChanged", true);
+    clearTriggers();
   }
   if (event.has("channelName")) {
     channelName = event.getString("channelName");
-    oocsi.subscribe( channelName, "testchannel" ); // connect to desired channel
-    subbed = true; // module is subscribed to a channel
+    //oocsi.subscribe( channelName, "testchannel" ); // connect to desired channel
+    linkedChannel = true; // module is subscribed to a channel
     response.data("channelNameChanged", true);
+    println("Module will send data over to "+ channelName);
   }
   if (event.has("delay")) {
-    delay = event.getInt("delay", 0);
+    delay = event.getInt("delay", 1000);
     clearTriggers();
     response.data("delayChanged", true);
   }
@@ -134,14 +137,23 @@ void setValues(OOCSIEvent event, OOCSIData response) {
     response.data("stickChanged", true);
   }
   if (event.has("clear")) {
-    int index = event.getInt("delay", 0) - 1;
-    if ( index > -1 && index < pinAmount){
+    int index = event.getInt("clear", 0) - 1;
+    if ( index > -1 && index < pinAmount) {
       triggers[index] = false; // clear the trigger at that index
-      response.data("TriggerCleared", index);
+      response.data("TriggerCleared", index + 1);
     } else {
       clearTriggers(); // clear all triggers
       response.data("TriggerCleared", 0);
     }
+  }
+  if (event.has("reset")) {
+    pinAmount = irPins.length;
+    channelName = "";
+    stick = false;
+    delay = 1000;
+    respondOnTrigger = true;
+    responded = false;
+    linkedChannel = false;
   }
 }
 
@@ -155,9 +167,9 @@ void getValues(OOCSIEvent event, OOCSIData response) {
   // returns all custom global variables
   if (event.has("setup")) {
     response.data("pinAmount", pinAmount)
-    .data("channelName", channelName)
-    .data("delay", delay)
-    .data("stick", stick);
+      .data("channelName", channelName)
+      .data("delay", delay)
+      .data("stick", stick);
   }
 }
 
@@ -165,43 +177,7 @@ void getValues(OOCSIEvent event, OOCSIData response) {
 
 // clears the triggers value
 void clearTriggers() {
-  for (int i = 0; i < triggers.length; i++){
-    triggers[i] = false; 
-  } 
-}
-
-// returns value from a single sensor
-// parameters: int sensor ( 1 - pinAmount )
-int getSensorValue( int n ) {
-  return ( arduino.digitalRead( irPins[n - 1] ) );
-}
-
-// returns array with sensor values, depends on pinAmount ( = active sensoren )
-// parameters: -
-int[] getSensorValues() {
-  int[] irVals = new int[ irPins.length ];
-  for (int i = 0; i < pinAmount; i++) {
-    irVals[i] = arduino.digitalRead( irPins[i] );
+  for (int i = 0; i < triggers.length; i++) {
+    triggers[i] = false;
   }
-  return ( irVals );
-}
-
-// returns amount of sensor values above the threshold ( = "triggered" )
-// parameters: int treshold ( 0 - 1024 )
-int getTriggered() {
-  int count = 0;
-  int[] irVals = getSensorValues();
-
-  for (int i = 0; i < irVals.length; i++) {
-    if ( irVals[i] != 1 ) {
-      count++;
-    }
-  }
-  return ( count );
-}
-
-// returns boolean. true if all sensors are triggered
-// parameters: int treshold ( 0 - 1024 )
-boolean allTriggered() {
-  return ( pinAmount == getTriggered() );
 }
