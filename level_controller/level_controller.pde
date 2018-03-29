@@ -28,21 +28,60 @@ import nl.tue.id.oocsi.*;
 import nl.tue.id.oocsi.client.services.*;
 
 OOCSI oocsi;
-int progress = 0;
+int progress = 0; // step counter, indicates how much progress has been made
+String[] progStr = {
+  "0. Level initialization", 
+  "1. All IR6 sensors triggered", 
+  "2. Soundbox plays 6start", 
+  "3. Magnet keyboard detects correct bets", 
+  "4. Soundbox plays 6bets_placed", 
+  "5. Two IR6 sensors triggered", 
+  "6. Soundbox plays 6loser", 
+  "7. Clock detects correct angle", 
+  "8. Soundbox plays 6clock", 
+  "9. One IR6 sensor triggered", 
+  "10. Soundbox plays 6grats"
+};
 
 void setup() {
-  size(300, 100);
-  stroke(255);
-  strokeWeight(2);
-  colorMode( HSB, 100 );
-
+  size(500, 100);
   // connect with OOCSI client for calling the service
-  oocsi = new OOCSI(this, "Smudgy", "oocsi.id.tue.nl");
-  OOCSICall call = oocsi.channel("soundbox").call("play",1000).data("name", "secret").data("volume", 100).send();
+  oocsi = new OOCSI(this, "Smudgy", "localhost");
 }
 
 void draw() {
-  
-  
-  
+  background(50);
+  textSize(24);
+  noStroke();
+  fill(255, 255, 255);
+  text(progStr[progress], 10, 10, 490, 90);
+
+  if ( frameCount % 60 == 0 ) {
+    progress = (progress + 1) % progStr.length;
+  }
+}
+
+// method for calling the SoundBox
+void soundBoxCall(int delay, String name) {
+  if (delay <= 7000) {
+    OOCSICall call = oocsi.call("play", delay).data("name", name).data("volume", 100);
+    call.sendAndWait();
+    if (call.hasResponse()) {
+      println("IR6Module linked to channel!");
+    } else {
+      soundBoxCall(delay + 1000, name); // try again, with a second extra delay
+    }
+  }
+}
+
+void call2(int delay) {
+  if (delay <= 7000) {
+    OOCSICall call = oocsi.call("play", delay).data("name", "secret").data("volume", 100);
+    call.sendAndWait();
+    if (call.hasResponse()) {
+      println("IR6Module linked to channel!");
+    } else {
+      call2(delay + 1000); // try again, with a second extra delay
+    }
+  }
 }
