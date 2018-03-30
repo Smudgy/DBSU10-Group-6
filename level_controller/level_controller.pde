@@ -1,8 +1,8 @@
 /**
- *  DBSU10 IR sensor module
+ *  DBSU10 Casino level controller
  *  @author Tom van Roozendaal, group 6
- *  @version 1.5
- *  @since 22/02/2018
+ *  @version 1.0
+ *  @since 24/03/2018
  *  
  *  Ideal playthrough:
  *  1. -- all sensors trigger (sticky for amount of time)
@@ -40,21 +40,21 @@ String[] progStr = {
   "7. Clock detects correct angle", 
   "8. Soundbox plays 6clock", 
   "9. One IR6 sensor triggered", 
-  "10. Soundbox plays 6grats"
+  "10. Soundbox plays 6winner"
 };
 
 void setup() {
-  size(500, 100);
+  size(120, 120);
   // connect with OOCSI client for calling the service
   oocsi = new OOCSI(this, "Smudgy", "localhost");
 }
 
 void draw() {
   background(50);
-  textSize(24);
+  textSize(12);
   noStroke();
   fill(255, 255, 255);
-  text(progStr[progress], 10, 10, 490, 90);
+  text(progStr[progress], 10, 10, width-20, height-20);
 
   if ( frameCount % 60 == 0 ) {
     progress = (progress + 1) % progStr.length;
@@ -63,7 +63,7 @@ void draw() {
 
 // method for calling the SoundBox
 void soundBoxCall(int delay, String name) {
-  if (delay <= 7000) {
+  if (delay <= 5000) {
     OOCSICall call = oocsi.call("play", delay).data("name", name).data("volume", 100);
     call.sendAndWait();
     if (call.hasResponse()) {
@@ -75,7 +75,7 @@ void soundBoxCall(int delay, String name) {
 }
 
 void call2(int delay) {
-  if (delay <= 7000) {
+  if (delay <= 5000) {
     OOCSICall call = oocsi.call("play", delay).data("name", "secret").data("volume", 100);
     call.sendAndWait();
     if (call.hasResponse()) {
