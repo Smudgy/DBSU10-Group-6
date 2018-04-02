@@ -42,6 +42,7 @@ String[] progStr = {
   "9. One IR6 sensor triggered", 
   "10. Soundbox plays 6winner"
 };
+String keypadCode1 = "012";
 
 void setup() {
   size(120, 120);
@@ -74,14 +75,14 @@ void soundBoxCall(int delay, String name) {
   }
 }
 
-void call2(int delay) {
+void keyPadCall1(int delay) {
   if (delay <= 5000) {
-    OOCSICall call = oocsi.call("play", delay).data("name", "secret").data("volume", 100);
+    OOCSICall call = oocsi.call("keypadSet", delay).data("code", keypadCode1);
     call.sendAndWait();
     if (call.hasResponse()) {
-      println("IR6Module linked to channel!");
+      println(call.getString("result"));
     } else {
-      call2(delay + 1000); // try again, with a second extra delay
+      keyPadCall1(delay + 1000); // try again, with a second extra delay
     }
   }
 }
