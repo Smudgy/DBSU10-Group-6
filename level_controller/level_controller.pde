@@ -41,23 +41,28 @@ String[] progStr = {
 // module variables
 String keypadCode1 = "012";
 boolean keypadSuccess = false;
+boolean clockSuccess = false;
 boolean[] trigArr = { false, false, false };
-String soundbox = "soundboxA";
+String soundbox = "soundbox2";
+int sbVol = 70;
 
 int timer = millis() + 5000; // 5 sec timer (sound files)
 int timer2 = millis() + 1000; // 1 sec timer2 (checking sensors)
 
 void setup() {
   size(200, 200);
-  oocsi = new OOCSI(this, "level6", "localhost");
+  oocsi = new OOCSI(this, "level6", "oocsi.id.tue.nl");
 
   // set keypad code
   OOCSICall c = oocsi.call("keypadSet", 1000).data("code", keypadCode1).sendAndWait();
   println(c.getFirstResponse().getString("result"));
+  // set clock code
   oocsi.subscribe("clock");
+  oocsi.channel("clock").data("clockSet", 80).send();
 }
 
 void draw() {
+
   background(50);
   textSize(16);
   noStroke();
@@ -69,11 +74,12 @@ void draw() {
   case 0:
     // timer to loop sound files
     if ( millis() > timer ) {
-      OOCSICall c = oocsi.call( soundbox, "play", 1000).data("name", "gr6_sit").data("volume", 80);
+      OOCSICall c = oocsi.call( soundbox, "play", 1000).data("name", "gr6_sit").data("volume", sbVol);
       makeCall(c, 3);
       timer = millis() + 10000; // reset timer; 10 sec
     }
-
+  
+    // IR sensors
     if ( millis() > timer2 ) {
       OOCSICall c = oocsi.call("getIR6", 1000).data("triggered", true).sendAndWait();
       if ( c.hasResponse() ) {
@@ -81,7 +87,6 @@ void draw() {
         timer = millis() + 1000;
       }
     }
-
     // if all sensors are triggered
     if ( trigArr[0] && trigArr[1] && trigArr[2] ) {
       timer = 0;
@@ -92,7 +97,7 @@ void draw() {
   case 1:
     // timer to loop sound files
     if ( millis() > timer ) {
-      OOCSICall c = oocsi.call( soundbox, "play", 1000).data("name", "gr6_welcome").data("volume", 80);
+      OOCSICall c = oocsi.call( soundbox, "play", 1000).data("name", "gr6_welcome").data("volume", sbVol);
       makeCall(c, 3);
       timer = millis() + 20000; // reset timer; 15 sec
     }
@@ -106,38 +111,25 @@ void draw() {
     // ------------------------------------------------
   case 2:
     // timer to loop sound files
-    //if ( millis() > timer ) {
-    //  OOCSICall c = oocsi.call("soundbox", "play", 1000).data("name", "gr6_loser").data("volume", 80);
-    //  makeCall(c, 3);
-    //  timer = millis() + 10000; // reset timer; 10 sec
-    //}
-
-    //if ( millis() > timer2 ) {
-    //  OOCSICall c = oocsi.call("getIR6", 1000).data("triggered", true).sendAndWait();
-    //  if ( c.hasResponse() ) {
-    //    trigArr = (boolean[]) c.getFirstResponse().getObject("triggered");
-    //    timer = millis() + 1000;
-    //  }
-    //}
-
-    //// if two sensors are triggered ( 0 and 1 )
-    //if ( trigArr[0] && trigArr[1] ) {
-    //  timer = 0;
-    //  success = true;
-    //}
-    //break;
-    // ------------------------------------------------
-  case 3:
-    // timer to loop sound files
     if ( millis() > timer ) {
-      OOCSICall c = oocsi.call( soundbox, "play", 1000).data("name", "gr6_round2").data("volume", 80);
+      OOCSICall c = oocsi.call( soundbox, "play", 1000).data("name", "gr6_round2").data("volume", sbVol);
       makeCall(c, 3);
       timer = millis() + 20000; // reset timer; 20 sec
     }
 
     // if the clock is angeled successfully
-    if (  ) {
-      OOCSICall c = oocsi.call("getClock").data("", "");
+    if ( clockSuccess ) {
+      timer = 0;
+      success = true;
+    }
+    break;
+    // ------------------------------------------------
+  case 3:
+    // timer to loop sound files
+    if ( millis() > timer ) {
+      OOCSICall c = oocsi.call( soundbox, "play", 1000).data("name", "gr6_round2").data("volume", sbVol);
+      makeCall(c, 3);
+      timer = millis() + 20000; // reset timer; 20 sec
     }
     break;
     // ------------------------------------------------
@@ -159,9 +151,6 @@ void draw() {
   case 9:
     break;
     // ------------------------------------------------
-  case 10:
-
-    break;
   default:  
     print("error, invalid progress value");
     break;
@@ -189,5 +178,8 @@ void makeCall(OOCSICall call, int tries) {
 void handleOOCSIEvent(OOCSIEvent e) {
   if ( e.has("type") && e.getString("type") == "success") {
     keypadSuccess = true;
+  }
+  if ( e.has("clockVerify") && e.getInt("clockVerify", 0) == 1) {
+    clockSuccess = true;
   }
 }
