@@ -183,16 +183,11 @@ void handleOOCSIEvent(OOCSIEvent e) {
   if ( e.has("type") && e.getString("type") == "success") {
     keypadSuccess = true;
   }
-  if ( e.has("clockVerify")) {
-    println("yo");
-  }
-  if ( e.has("clockVerify") && e.getInt("clockVerify", 0) == 1) {
-    clockSuccess = true;
-  }
 }
 
 void clock1200(OOCSIEvent e) {
-  if ( e.has("clockVerify")) {
-    println("yo");
+  if ( e.has("clockVerify") && e.getInt("clockVerify", 0) == 1) {
+    clockSuccess = true;
+    println("yoooooo ooo oo oo o o o");
   }
 }
