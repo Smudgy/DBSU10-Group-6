@@ -163,6 +163,7 @@ void getValues(OOCSIEvent event, OOCSIData response) {
   // type: boolean
   if (event.has("triggered")) {
     response.data("triggered", triggers );
+    println("triggers sent");
   }
   // returns all custom global variables
   if (event.has("setup")) {

@@ -5,22 +5,14 @@
  *  @since 24/03/2018
  *  
  *  Ideal playthrough:
- *  1. -- all sensors trigger (sticky for amount of time)
- *  2. soundbox plays "gr6_magnet.wav"
- *  3. - magnet keyboard detects 3 inputs
- *  4. soundbox plays "gr6_magnet2.wav"
- *  5. -- IR6 detects the right sensors (2)
- *  6. soundbox plays "gr6_clock.wav"
- *  7. - clock detects correct angle
- *  8. soundbox plays "gr6_clock2.wav"
- *  9. -- IR6 detects the right sensors (1)
- *  0. soundbox plays "gr6_grats.wav"
+ *  0. soundbox plays "group6_sit.wav"
+ *  1. -- all sensors trigger ( validating the values through a loop )
+ *  2. soundbox plays "group6_bets.wav"
+ *  3. -- magnet keyboard detects the 3 correct inputs ( sends success message )
+ *  4. soundbox plays "group6_lucky.wav" and "group6_roll_start.wav"
+ *  5. -- clock detects correct angle ( sends success message )
+ *  6. soundbox plays "group6_cheers.wav" and "group6_roll_end.wav"
  *  
- *  When shit goes wrong:
- *  - soundbox plays "gr6_night.wav"    "Thats not how that night went."
- *  - soundbox plays "gr6_sitdown.wav"  "Sit down! you're not done here yet!"
- *  - soundbox plays "gr6_leave.wav"    "Please leave the table, loser."
- *  - soundbox plays ""
  */
 import processing.serial.*;
 import cc.arduino.*;
@@ -31,56 +23,55 @@ OOCSI oocsi;
 int progress = 0; // step counter, indicates how much progress has been made
 boolean success = false;
 String[] progStr = {
-  "Level initialization", 
-  "All IR6 sensors triggered, Soundbox plays", 
-  "Magnet keyboard detects correct bets", 
-  "Two IR6 sensors triggered", 
-  "Clock detects correct angle", 
-  "One IR6 sensor triggered"
+  "Level initialization, next: IR sensors", 
+  "All IR6 sensors triggered, next: keypad", 
+  "Magnet keyboard detects correct bets, next: clock", 
+  "Clock detects correct angle, next: success!", 
+  "Cheers, level finished"
 };
 // module variables
+boolean[] trigArr = { false, false, false };
 String keypadCode1 = "357";
 boolean keypadSuccess = false;
 boolean clockSuccess = false;
-boolean[] trigArr = { false, false, false };
 String soundbox = "soundbox2";
 int sbVol = 70;
 
-int timer = millis() + 5000; // 5 sec timer (sound files)
-int timer2 = millis() + 1000; // 1 sec timer2 (checking sensors)
+// timers
+int timer = millis() + 5000; // 5 sec timer (for playing sound files)
+int timer2 = millis() + 1000; // 1 sec timer2 (for checking modules)
 
 void setup() {
   size(200, 200);
   oocsi = new OOCSI(this, "level6", "oocsi.id.tue.nl");
 
   // set keypad code
-  //OOCSICall c = oocsi.call("keypadSet", 1000).data("code", keypadCode1).sendAndWait();
-  //println(c.getFirstResponse().getString("result"));
+  OOCSICall c = oocsi.call("keypadSet", 1000).data("code", keypadCode1).sendAndWait();
+  if ( c.hasResponse() ) {
+    println(c.getFirstResponse().getString("result"));
+  }
   // set clock code
   oocsi.subscribe("clock1200");
+  oocsi.channel("clock1200").data("clockSet", 80).send();
+  println();
 }
 
 void draw() {
+  // some visualization
   background(50);
-  println(frameCount);
-  if (frameCount % 60 == 0) {
-    println("send to clock1200!");
-    oocsi.channel("clock1200").data("clockSet", 80).send();
-    background(255, 0, 0);
-  }
   textSize(16);
   noStroke();
   fill(255, 255, 255);
-  text(progress + ": " + progStr[progress], 10, 10, width-20, height-20);
+  text(Math.min(progress, 4) + ": " + progStr[Math.min(progress, 4)], 10, 10, width-20, height-20);
 
   // steps
   switch ( progress ) {
   case 0:
     // timer to loop sound files
     if ( millis() > timer ) {
-      OOCSICall c = oocsi.call( soundbox, "play", 1000).data("name", "gr6_sit").data("volume", sbVol);
+      OOCSICall c = oocsi.call( soundbox, "play", 1000).data("name", "group6_sit2").data("volume", sbVol);
       makeCall(c, 3);
-      timer = millis() + 10000; // reset timer; 10 sec
+      timer = millis() + 7000; // reset timer; 7 sec
     }
 
     if ( millis() > timer2 ) {
@@ -101,24 +92,26 @@ void draw() {
   case 1:
     // timer to loop sound files
     if ( millis() > timer ) {
-      OOCSICall c = oocsi.call( soundbox, "play", 1000).data("name", "gr6_bets").data("volume", sbVol);
+      OOCSICall c = oocsi.call( soundbox, "play", 1000).data("name", "group6_bets2").data("volume", sbVol);
       makeCall(c, 3);
-      timer = millis() + 20000; // reset timer; 15 sec
+      timer = millis() + 10000; // reset timer; 10 sec
     }
 
     // if the keypad sends success message
     if ( keypadSuccess ) {
       timer = 0;
       success = true;
+      OOCSICall c2 = oocsi.call( soundbox, "play", 1000).data("name", "group6_roll_start").data("volume", sbVol);
+      makeCall(c2, 3);
     }
     break;
     // ------------------------------------------------
   case 2:
     // timer to loop sound files
     if ( millis() > timer ) {
-      OOCSICall c = oocsi.call( soundbox, "play", 1000).data("name", "gr6_lucky2").data("volume", sbVol);
+      OOCSICall c = oocsi.call( soundbox, "play", 1000).data("name", "group6_lucky2").data("volume", sbVol);
       makeCall(c, 3);
-      timer = millis() + 20000; // reset timer; 20 sec
+      timer = millis() + 10000; // reset timer; 10 sec
     }
 
     // if the clock is angeled successfully
@@ -129,44 +122,42 @@ void draw() {
     break;
     // ------------------------------------------------
   case 3:
-    // timer to loop sound files
     if ( millis() > timer ) {
-      OOCSICall c = oocsi.call( soundbox, "play", 1000).data("name", "gr6_cheer").data("volume", sbVol);
+      OOCSICall c2 = oocsi.call( soundbox, "play", 1000).data("name", "group6_roll_end").data("volume", sbVol);
+      makeCall(c2, 3);
+    }
+    if ( millis() > timer + 800) {
+      OOCSICall c = oocsi.call( soundbox, "play", 1000).data("name", "group6_cheer").data("volume", sbVol);
       makeCall(c, 3);
-      timer = millis() + 20000; // reset timer; 20 sec
+      success = true;
     }
     break;
     // ------------------------------------------------
   case 4:
+    if ( millis() > timer ) {
+      println("success! Level finished");
+      timer = millis() + 5000;
+    }
     break;
-    // ------------------------------------------------
-  case 5:
-    break;
-    // ------------------------------------------------
-  case 6:
-    break;
-    // ------------------------------------------------
-  case 7:
-    break;
-    // ------------------------------------------------
-  case 8:
-    break;
-    // ------------------------------------------------
-  case 9:
-    break;
-    // ------------------------------------------------
-  default:  
-    print("error, invalid progress value");
+  default:
+    if ( millis() > timer ) {
+      println("error, invalid progress value");
+      timer = millis() + 5000;
+    }
     break;
   }
-
+  
+  // advance if the step was successful
   if ( success ) {
     progress++;
     success = false;
   }
 }
 
-// method for calling to modules whos response is irrelevant
+// -------------------------- METHODS --------------------------
+
+// method for calling to modules without relevant feedback
+// i.e. soundbox
 void makeCall(OOCSICall call, int tries) {
   if (tries > 0) {
     call.sendAndWait();
@@ -180,14 +171,26 @@ void makeCall(OOCSICall call, int tries) {
 
 // OOCSI direct receiver
 void handleOOCSIEvent(OOCSIEvent e) {
-  if ( e.has("type") && e.getString("type") == "success") {
+  if ( e.has("type") && e.getString("type") == "success" && !keypadSuccess) {
     keypadSuccess = true;
+    println("keypad is successful");
   }
 }
 
+// OOCSI clock channel receiver
 void clock1200(OOCSIEvent e) {
-  if ( e.has("clockVerify") && e.getInt("clockVerify", 0) == 1) {
+  if ( e.has("clockVerify") && e.getInt("clockVerify", 0) == 1 && !clockSuccess) {
     clockSuccess = true;
-    println("yoooooo ooo oo oo o o o");
+    println("clock is successful");
   }
+}
+
+// simple skip feature
+void mousePressed() {
+  fill(0, 168, 107, 112);
+  rect(0, 0, width, height);
+  
+  progress++;
+  timer = 0;
+  timer2 = 0;
 }
