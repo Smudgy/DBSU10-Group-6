@@ -14,8 +14,6 @@
  *  6. soundbox plays "group6_roll_end.wav" and "group6_cheers.wav"
  *  
  */
-import processing.serial.*;
-import cc.arduino.*;
 import nl.tue.id.oocsi.*;
 import nl.tue.id.oocsi.client.services.*;
 
